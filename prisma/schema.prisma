@@ -1,0 +1,24 @@
+generator client {
+    provider = "prisma-client-js"
+    output   = "../generated/prisma"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+model Transaction {
+    id          String   @id @default(cuid())
+    type        String
+    description String
+    amount      Float
+    category    String
+    date        DateTime
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+    userId      String
+
+    @@index([userId])
+    @@index([userId, date])
+}
