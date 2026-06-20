@@ -1,13 +1,14 @@
 name: FinanzasFácil CI
 
+# "Este pipeline se activa en dos momentos: cada push a la rama develop... y en cada Pull Request que apunta a main"
 on:
   push:
     branches: [ "develop" ]
   pull_request:
     branches: [ "main" ]
-    workflow_dispatch:
 
 jobs:
+  # "Job 1 — Verificación Estática: Corre TypeScript... y ESLint"
   job1_verificacion_estatica:
     name: Job 1 — Verificación Estática
     runs-on: ubuntu-latest
@@ -25,9 +26,10 @@ jobs:
       - name: Linter (ESLint)
         run: npm run lint
 
+  # "Job 2 — Pruebas Unitarias: Solo corre si el Job 1 pasó... Las variables sensibles vienen de los Secrets"
   job2_pruebas_unitarias:
     name: Job 2 — Pruebas Unitarias
-    needs: job1_verificacion_estatica
+    needs: job1_verificacion_estatica # Esto asegura que no corra si el Job 1 falla
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -38,14 +40,15 @@ jobs:
           cache: 'npm'
       - name: Instalar dependencias
         run: npm ci
-      - name: Pruebas con reporte de cobertura
+      - name: Pruebas Unitarias (Jest)
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }} # Toma la variable de entorno
         run: npm run test -- --coverage
 
+  # "Job 3 — Build de Producción: Solo corre si los dos anteriores pasaron... Construye el bundle de Next.js"
   job3_build_produccion:
     name: Job 3 — Build de Producción
-    needs: job2_pruebas_unitarias
+    needs: job2_pruebas_unitarias # Esto asegura que no corra si el Job 2 falla
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -56,5 +59,5 @@ jobs:
           cache: 'npm'
       - name: Instalar dependencias
         run: npm ci
-      - name: Compilar empaquetado (Next.js Build)
+      - name: Build de Next.js
         run: npm run build
