@@ -5,6 +5,7 @@ on:
     branches: [ "develop" ]
   pull_request:
     branches: [ "main" ]
+    workflow_dispatch:
 
 jobs:
   job1_verificacion_estatica:
