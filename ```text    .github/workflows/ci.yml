@@ -1,0 +1,59 @@
+name: FinanzasFácil CI
+
+on:
+  push:
+    branches: [ "develop" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  job1_verificacion_estatica:
+    name: Job 1 — Verificación Estática
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - name: Instalar dependencias
+        run: npm ci
+      - name: Chequeo de Tipos (TypeScript)
+        run: npx tsc --noEmit
+      - name: Linter (ESLint)
+        run: npm run lint
+
+  job2_pruebas_unitarias:
+    name: Job 2 — Pruebas Unitarias
+    needs: job1_verificacion_estatica
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - name: Instalar dependencias
+        run: npm ci
+      - name: Pruebas con reporte de cobertura
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: npm run test -- --coverage
+
+  job3_build_produccion:
+    name: Job 3 — Build de Producción
+    needs: job2_pruebas_unitarias
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - name: Instalar dependencias
+        run: npm ci
+      - name: Compilar empaquetado (Next.js Build)
+        run: npm run build
